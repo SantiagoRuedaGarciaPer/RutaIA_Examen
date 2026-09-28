@@ -1,4 +1,5 @@
 {
+  "name": "My workflow",
   "nodes": [
     {
       "parameters": {
@@ -7,13 +8,13 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "29f70013-8e32-4058-99f0-133f52e2c31d",
+      "id": "4d8d19fe-d44c-4c32-b30c-ccc55bfb6f53",
       "name": "Webhook - Recibir Consulta",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -864,
-        96
+        -576,
+        -16
       ],
       "webhookId": "rutaia-consulta-webhook"
     },
@@ -28,18 +29,18 @@
         "jsonBody": "={{ JSON.stringify({ model: \"openai/text-embedding-3-small\", input: $json.body.pregunta }) }}",
         "options": {}
       },
-      "id": "b4ad84ff-217c-49a9-b3cd-e7d57140276e",
+      "id": "76042cce-2e47-4b8c-ad8c-4beaa1855a70",
       "name": "OpenRouter - Embedding de Pregunta",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -640,
-        96
+        0,
+        608
       ],
       "credentials": {
         "httpBearerAuth": {
-          "id": "fY1ZOylHdG7Nk50M",
-          "name": "Bearer Auth account 2"
+          "id": "PKHo1cjeC84X9ZBX",
+          "name": "Bearer Auth account"
         }
       }
     },
@@ -52,26 +53,26 @@
         "jsonBody": "={{ JSON.stringify({ vector: $json.data[0].embedding, limit: 5, score_threshold: 0.4, with_payload: true }) }}",
         "options": {}
       },
-      "id": "950c1f0f-2707-4fbd-86ed-f496993f3f07",
+      "id": "fd01dfd5-93cc-4cf0-b827-736b74cb9c20",
       "name": "Qdrant - Buscar Cursos Similares",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -416,
-        96
+        224,
+        608
       ]
     },
     {
       "parameters": {
         "jsCode": "const resultados = $json.result || [];\nconst body = $('Webhook - Recibir Consulta').item.json.body;\n\nconst contexto = resultados.map(r =>\n  `- ${r.payload.nombre} (Categoría: ${r.payload.categoria}, Nivel: ${r.payload.nivel}, Similitud: ${(r.score*100).toFixed(1)}%): ${r.payload.descripcion}`\n).join('\\n');\n\nreturn {\n  json: {\n    consulta_id: body.consulta_id,\n    pregunta: body.pregunta,\n    contexto: contexto || null,\n    resultados,\n    hay_resultados: resultados.length > 0\n  }\n};"
       },
-      "id": "f55a83f5-eacf-428f-aeff-4db88a243169",
+      "id": "f1277e98-1554-46d9-800b-3bc0d65a7f99",
       "name": "Formatear Contexto",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -192,
-        96
+        448,
+        608
       ]
     },
     {
@@ -98,13 +99,13 @@
         },
         "options": {}
       },
-      "id": "fc03a994-5d2c-4e3c-a84e-c42f1c8c0580",
+      "id": "dd7b50b9-2f6f-4bd5-8ecc-dcd907c76116",
       "name": "IF - Hay Resultados",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        32,
-        96
+        672,
+        608
       ]
     },
     {
@@ -118,18 +119,18 @@
         "jsonBody": "={{ JSON.stringify({ model: \"openai/gpt-4o-mini\", messages: [ { role: \"system\", content: \"Eres un asesor académico de RutaIA. Recibes la pregunta de un estudiante y una lista de cursos candidatos encontrados por similitud semántica en el catálogo. Responde de forma clara y breve, recomendando el o los cursos más adecuados basándote únicamente en la lista entregada. No inventes cursos que no estén en la lista. Si la información no es suficiente, dilo honestamente.\" }, { role: \"user\", content: `Pregunta del estudiante: \"${$json.pregunta}\"\\n\\nCursos candidatos:\\n${$json.contexto}` } ] }) }}",
         "options": {}
       },
-      "id": "88bc6943-eca8-44c1-a55f-3b1ab1dbfa55",
+      "id": "d86c2b75-8e95-4878-aa6d-240bab1aaebe",
       "name": "OpenRouter - Redactar Respuesta",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        256,
-        -16
+        896,
+        496
       ],
       "credentials": {
         "httpBearerAuth": {
-          "id": "fY1ZOylHdG7Nk50M",
-          "name": "Bearer Auth account 2"
+          "id": "PKHo1cjeC84X9ZBX",
+          "name": "Bearer Auth account"
         }
       }
     },
@@ -137,13 +138,13 @@
       "parameters": {
         "jsCode": "const respuesta = $json.choices[0].message.content;\nconst formateado = $('Formatear Contexto').item.json;\n\nreturn {\n  json: {\n    consulta_id: formateado.consulta_id,\n    pregunta: formateado.pregunta,\n    respuesta,\n    estado: 'Respondida'\n  }\n};"
       },
-      "id": "0578f48b-dad6-4cbd-936f-49322eedc524",
+      "id": "8d8d0680-c86a-47ba-98f8-b85251a7e83a",
       "name": "Preparar Respuesta Final",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        480,
-        -16
+        1120,
+        496
       ]
     },
     {
@@ -152,13 +153,13 @@
         "responseBody": "={{ $json }}",
         "options": {}
       },
-      "id": "99d8dadc-1313-4761-9333-f0132f76f024",
+      "id": "6589595f-d187-4e76-a380-e98bc6b0bdde",
       "name": "Responder al Estudiante",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        704,
-        -16
+        1344,
+        496
       ]
     },
     {
@@ -167,22 +168,241 @@
         "responseBody": "={{ { consulta_id: $json.consulta_id, pregunta: $json.pregunta, respuesta: \"No se encontraron datos relacionados, por el momento solo tenemos cursos de Tecnologia\", estado: 'Sin resultados' } }}",
         "options": {}
       },
-      "id": "93cebd9f-2271-4dd3-a195-b3b79e116284",
+      "id": "242c2ed8-517e-4b89-a0d7-c49ce86f8941",
       "name": "Responder Sin Resultados",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        256,
-        224
+        896,
+        736
       ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9d923e92-91c6-44a9-aec9-510ec7391bd5",
+              "leftValue": "={{ $json.body.pregunta }}",
+              "rightValue": "nivel",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -320,
+        -16
+      ],
+      "id": "4362c0d8-f1dc-40ec-8e4a-156bc020ef85",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/embeddings",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"openai/text-embedding-3-small\", input: $('If').item.json.body.pregunta + \" Nivel: \" +$json.nivel[$json.nivel.length-1] }) }}",
+        "options": {}
+      },
+      "id": "a52ddc0f-df23-44c5-8478-ee99e869e5e1",
+      "name": "OpenRouter - Embedding de Pregunta1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        128,
+        -32
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "PKHo1cjeC84X9ZBX",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://qdrant:6333/collections/cursos/points/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ vector: $json.data[0].embedding, limit: 5, score_threshold: 0.4, with_payload: true }) }}",
+        "options": {}
+      },
+      "id": "2ee5d056-9e7e-4c3f-8bdc-0012cdc40170",
+      "name": "Qdrant - Buscar Cursos Similares1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        368,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const resultados = $json.result || [];\nconst body = $('Webhook - Recibir Consulta').item.json.body;\n\nconst contexto = resultados.map(r =>\n  `- ${r.payload.nombre} (Categoría: ${r.payload.categoria}, Nivel: ${r.payload.nivel}, Similitud: ${(r.score*100).toFixed(1)}%): ${r.payload.descripcion}`\n).join('\\n');\n\nreturn {\n  json: {\n    consulta_id: body.consulta_id,\n    pregunta: body.pregunta,\n    contexto: contexto || null,\n    resultados,\n    hay_resultados: resultados.length > 0\n  }\n};"
+      },
+      "id": "4570276a-2293-47d7-b1b1-deb439d84373",
+      "name": "Formatear Contexto1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.hay_resultados }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      },
+      "id": "1090478c-2277-45e7-96c9-bb6961c8270c",
+      "name": "IF - Hay Resultados1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        816,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"openai/gpt-4o-mini\", messages: [ { role: \"system\", content: \"Eres un asesor académico de RutaIA. Recibes la pregunta de un estudiante y una lista de cursos candidatos encontrados por similitud semántica en el catálogo. Responde de forma clara y breve, recomendando el o los cursos más adecuados basándote únicamente en la lista entregada. No inventes cursos que no estén en la lista. Si la información no es suficiente, dilo honestamente.\" }, { role: \"user\", content: `Pregunta del estudiante: \"${$json.pregunta}\"\\n\\nCursos candidatos:\\n${$json.contexto}` } ] }) }}",
+        "options": {}
+      },
+      "id": "83ce903f-d048-411a-b6b5-8795fabad8f7",
+      "name": "OpenRouter - Redactar Respuesta1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        -144
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "PKHo1cjeC84X9ZBX",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const respuesta = $json.choices[0].message.content;\nconst formateado = $('Formatear Contexto1').item.json;\n\nreturn {\n  json: {\n    consulta_id: formateado.consulta_id,\n    pregunta: formateado.pregunta,\n    respuesta,\n    estado: 'Respondida'\n  }\n};"
+      },
+      "id": "53ec8220-0112-4d8b-b4ae-cd0645585949",
+      "name": "Preparar Respuesta Final1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "80c89f7e-4b87-4528-b23c-fbe1eee7a061",
+      "name": "Responder al Estudiante1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1488,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { consulta_id: $json.consulta_id, pregunta: $json.pregunta, respuesta: \"No se encontraron datos relacionados, por el momento solo tenemos cursos de Tecnologia\", estado: 'Sin resultados' } }}",
+        "options": {}
+      },
+      "id": "f0719cd2-fdf5-4f5d-ad8f-7a5ad26885e5",
+      "name": "Responder Sin Resultados1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1040,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a599dbf1-019e-450b-8892-7f0c99adf43c",
+              "name": "nivel",
+              "value": "={{ $json.body.pregunta.split(\" \") }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -112,
+        -32
+      ],
+      "id": "47512b1f-9220-4d70-ad9b-1f7d4fc4e0b5",
+      "name": "Edit Fields"
     }
   ],
+  "pinData": {},
   "connections": {
     "Webhook - Recibir Consulta": {
       "main": [
         [
           {
-            "node": "OpenRouter - Embedding de Pregunta",
+            "node": "If",
             "type": "main",
             "index": 0
           }
@@ -261,10 +481,120 @@
           }
         ]
       ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OpenRouter - Embedding de Pregunta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter - Embedding de Pregunta1": {
+      "main": [
+        [
+          {
+            "node": "Qdrant - Buscar Cursos Similares1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant - Buscar Cursos Similares1": {
+      "main": [
+        [
+          {
+            "node": "Formatear Contexto1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Contexto1": {
+      "main": [
+        [
+          {
+            "node": "IF - Hay Resultados1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Hay Resultados1": {
+      "main": [
+        [
+          {
+            "node": "OpenRouter - Redactar Respuesta1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder Sin Resultados1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter - Redactar Respuesta1": {
+      "main": [
+        [
+          {
+            "node": "Preparar Respuesta Final1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Respuesta Final1": {
+      "main": [
+        [
+          {
+            "node": "Responder al Estudiante1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "OpenRouter - Embedding de Pregunta1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "631c2fc2-60c9-4348-a657-ea7b206ccb46",
   "meta": {
-    "instanceId": "f6c6fdb0ff90f6aee10b62ea282696ce3d4340778dbb1fbfde18d1c6f5f66a73"
-  }
+    "instanceId": "05728509a2ec65e01e3387bc93842f36a89da13a4bfbd87c6bfa77654f2baaa1"
+  },
+  "nodeGroups": [],
+  "id": "okRehb31u3cKEiFe",
+  "tags": []
 }
